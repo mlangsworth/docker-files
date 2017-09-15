@@ -3,6 +3,7 @@
 One master es node, X data notes, one kibana node
 
 $ dc down -v
+
 $ dc up --scale es=2 -d
 
 $ d ps -a
