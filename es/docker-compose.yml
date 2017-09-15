@@ -1,0 +1,80 @@
+version: '2'
+services:
+  es_master:
+    image: docker.elastic.co/elasticsearch/elasticsearch:5.4.3
+    container_name: es_master
+    environment:
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+      - xpack.watcher.enabled=false
+      - xpack.security.enabled=false
+      - node.name=es_master
+    # mem_limit: 3g
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 262144
+        hard: 262144
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - esdata1:/usr/share/elasticsearch/data/esdata1
+    ports:
+      - 9200:9200
+      - 9300:9300
+    networks:
+      - esnet
+  es:
+    image: docker.elastic.co/elasticsearch/elasticsearch:5.4.3
+    # container_name: elasticsearch1
+    environment:
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - xpack.watcher.enabled=false
+      - xpack.security.enabled=false
+      - node.max_local_storage_nodes=100
+      - discovery.zen.ping.unicast.hosts=es_master
+    # mem_limit: 3g
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 262144
+        hard: 262144
+    cap_add:
+      - IPC_LOCK
+    volumes:
+      - esdata2:/usr/share/elasticsearch/data/esdata2
+    ports:
+      - 9201
+      - 9299
+    networks:
+      - esnet
+    depends_on:
+      - es_master
+  kibana:
+    image: docker.elastic.co/kibana/kibana:5.4.3
+    environment:
+      ELASTICSEARCH_URL:  http://es_master:9200
+      # ELASTICSEARCH_USERNAME: elastic
+      # ELASTICSEARCH_PASSWORD: changeme
+      XPACK_SECURITY_ENABLED: "false"
+    ports:
+      - 5601:5601
+    networks:
+      - esnet
+    depends_on:
+      - es_master
+volumes:
+  esdata1:
+    driver: local
+  esdata2:
+    driver: local
+
+networks:
+  esnet:
